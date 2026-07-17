@@ -43,9 +43,10 @@ MCP client configuration:
 
 ## Available MCP Tools
 
-| Tool             | Description                                                         |
-| ---------------- | ------------------------------------------------------------------- |
-| `list_documents` | Lists documents with filtering, sorting and cursor-based pagination |
+| Tool               | Description                                                                   |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `list_documents`   | Lists documents with filtering, sorting and cursor-based pagination           |
+| `search_documents` | Full-text search across document content and attachments, with match snippets |
 
 ## Testing
 
