@@ -123,6 +123,100 @@ export interface GetTemplateResponse {
   template?: TemplateDetails;
 }
 
+export interface DocumentCreateSignee {
+  full_name?: string;
+  email?: string;
+  title?: string;
+  order?: number;
+  signature_verification_methods?: string[];
+}
+
+export interface DocumentCreateParty {
+  type?: string;
+  name?: string;
+  reference?: string;
+  address?: string;
+  number?: string;
+  signees?: DocumentCreateSignee[];
+}
+
+export interface DocumentCreateDataField {
+  name: string;
+  type: string;
+  value: string;
+  id?: string;
+  description?: string;
+  required?: boolean;
+  config?: Record<string, unknown>;
+}
+
+export interface DocumentCreateAttachment {
+  original: string;
+  filename?: string;
+  preview?: string[];
+}
+
+export interface DocumentCreateDynamicTable {
+  attrs: {
+    id: string;
+    columns: string[];
+    rows: string[][];
+  };
+}
+
+export interface DocumentCreateAttributes {
+  title?: string;
+  language?: string;
+  tags?: string[];
+  parties?: DocumentCreateParty[];
+  data_fields?: DocumentCreateDataField[];
+  message?: { content?: string };
+  attachments?: DocumentCreateAttachment[];
+  attachments_signed_separately?: boolean;
+  company_logo_url?: string;
+  signing_order_mode?: string;
+  to_be_signed_by?: string;
+  dynamic_tables?: DocumentCreateDynamicTable[];
+}
+
+export interface CreateDocumentRequest {
+  document: DocumentCreateAttributes;
+}
+
+export interface CreatedDocumentSignee {
+  full_name?: string | null;
+  email?: string | null;
+  title?: string | null;
+  order?: number;
+}
+
+export interface CreatedDocumentParty {
+  type?: string;
+  name?: string | null;
+  reference?: string | null;
+  signees?: CreatedDocumentSignee[];
+}
+
+export interface CreatedDocument {
+  id?: string;
+  title?: string;
+  state?: string;
+  type?: string;
+  language?: string;
+  tags?: string[];
+  created_at?: string;
+  updated_at?: string;
+  signing_order_mode?: string;
+  to_be_signed_by?: string;
+  source_template_id?: string;
+  parties?: CreatedDocumentParty[];
+  data_fields?: TemplateDataField[];
+}
+
+export interface CreateDocumentResponse {
+  document?: CreatedDocument;
+}
+
 export class ContractbookClient extends HttpClient {
   async listDocuments(params: Record<string, string | string[]>): Promise<ListDocumentsResponse> {
     const response = await this.request<ListDocumentsResponse>({
@@ -157,6 +251,19 @@ export class ContractbookClient extends HttpClient {
     const response = await this.request<GetTemplateResponse>({
       url: `v3/templates/${encodeURIComponent(id)}`,
       method: "GET",
+    });
+    return response.data;
+  }
+
+  async createDocumentFromTemplate(
+    id: string,
+    body: CreateDocumentRequest,
+  ): Promise<CreateDocumentResponse> {
+    const response = await this.request<CreateDocumentResponse>({
+      url: `v3/templates/${encodeURIComponent(id)}/create_document`,
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
     });
     return response.data;
   }

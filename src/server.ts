@@ -1,6 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/server";
 
 import type { ContractbookClient } from "./contractbook/client.js";
+import {
+  createDocumentFromTemplateConfig,
+  createDocumentFromTemplateHandler,
+} from "./tools/create-document-from-template.js";
 import { getTemplateConfig, getTemplateHandler } from "./tools/get-template.js";
 import { listDocumentsConfig, listDocumentsHandler } from "./tools/list-documents.js";
 import { listTemplatesConfig, listTemplatesHandler } from "./tools/list-templates.js";
@@ -20,6 +24,11 @@ export function createServer({ client }: ServerDependencies): McpServer {
   server.registerTool("search_documents", searchDocumentsConfig, searchDocumentsHandler(client));
   server.registerTool("list_templates", listTemplatesConfig, listTemplatesHandler(client));
   server.registerTool("get_template", getTemplateConfig, getTemplateHandler(client));
+  server.registerTool(
+    "create_document_from_template",
+    createDocumentFromTemplateConfig,
+    createDocumentFromTemplateHandler(client),
+  );
 
   return server;
 }
