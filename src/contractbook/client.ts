@@ -92,6 +92,37 @@ export interface ListTemplatesResponse {
   templates?: TemplatePreview[];
 }
 
+export interface TemplateDataFieldConfig {
+  label?: string | null;
+  options?: string[];
+}
+
+export interface TemplateDataField {
+  id?: string;
+  name?: string;
+  type?: string;
+  value?: string | null;
+  description?: string | null;
+  required?: boolean;
+  config?: TemplateDataFieldConfig;
+}
+
+export interface TemplateAttachment {
+  original?: string;
+  preview?: string[];
+}
+
+export interface TemplateDetails extends TemplatePreview {
+  data_fields?: TemplateDataField[];
+  default_message?: string;
+  attachments?: TemplateAttachment[];
+  company_logo_url?: string | null;
+}
+
+export interface GetTemplateResponse {
+  template?: TemplateDetails;
+}
+
 export class ContractbookClient extends HttpClient {
   async listDocuments(params: Record<string, string | string[]>): Promise<ListDocumentsResponse> {
     const response = await this.request<ListDocumentsResponse>({
@@ -118,6 +149,14 @@ export class ContractbookClient extends HttpClient {
       url: "v3/templates",
       method: "GET",
       params,
+    });
+    return response.data;
+  }
+
+  async getTemplate(id: string): Promise<GetTemplateResponse> {
+    const response = await this.request<GetTemplateResponse>({
+      url: `v3/templates/${encodeURIComponent(id)}`,
+      method: "GET",
     });
     return response.data;
   }
