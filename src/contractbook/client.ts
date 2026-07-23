@@ -69,6 +69,29 @@ export interface SearchDocumentsResponse {
   pagination_meta?: PaginationMeta;
 }
 
+export interface TemplateLocation {
+  id?: string;
+  name?: string;
+  type?: string;
+}
+
+export interface TemplatePreview {
+  id?: string;
+  title?: string | null;
+  description?: string;
+  language?: string;
+  slug?: string | null;
+  owned?: boolean;
+  owner_id?: string;
+  location?: TemplateLocation;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ListTemplatesResponse {
+  templates?: TemplatePreview[];
+}
+
 export class ContractbookClient extends HttpClient {
   async listDocuments(params: Record<string, string | string[]>): Promise<ListDocumentsResponse> {
     const response = await this.request<ListDocumentsResponse>({
@@ -84,6 +107,15 @@ export class ContractbookClient extends HttpClient {
   ): Promise<SearchDocumentsResponse> {
     const response = await this.request<SearchDocumentsResponse>({
       url: "documents/search",
+      method: "GET",
+      params,
+    });
+    return response.data;
+  }
+
+  async listTemplates(params: Record<string, string | string[]>): Promise<ListTemplatesResponse> {
+    const response = await this.request<ListTemplatesResponse>({
+      url: "v3/templates",
       method: "GET",
       params,
     });

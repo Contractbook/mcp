@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 
 import type { ContractbookClient } from "./contractbook/client.js";
 import { listDocumentsConfig, listDocumentsHandler } from "./tools/list-documents.js";
+import { listTemplatesConfig, listTemplatesHandler } from "./tools/list-templates.js";
 import { searchDocumentsConfig, searchDocumentsHandler } from "./tools/search-documents.js";
 
 export interface ServerDependencies {
@@ -16,6 +17,7 @@ export function createServer({ client }: ServerDependencies): McpServer {
 
   server.registerTool("list_documents", listDocumentsConfig, listDocumentsHandler(client));
   server.registerTool("search_documents", searchDocumentsConfig, searchDocumentsHandler(client));
+  server.registerTool("list_templates", listTemplatesConfig, listTemplatesHandler(client));
 
   return server;
 }
