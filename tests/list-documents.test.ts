@@ -1,20 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { ContractbookClient } from "../src/contractbook/client.js";
 import {
   buildParams,
   listDocumentsConfig,
   listDocumentsHandler,
 } from "../src/tools/list-documents.js";
 import { fakeFetch } from "./helpers/fake-fetch.js";
-
-function makeClient(fetchImpl: typeof fetch) {
-  return new ContractbookClient({
-    baseUrl: "http://test",
-    apiKey: "test-key",
-    fetchImpl,
-  });
-}
+import { makeClient } from "./helpers/make-client.js";
 
 describe("listDocumentsConfig", () => {
   it("accepts an empty input", () => {

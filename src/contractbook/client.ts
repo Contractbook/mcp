@@ -249,7 +249,7 @@ export class ContractbookClient extends HttpClient {
 
   async getTemplate(id: string): Promise<GetTemplateResponse> {
     const response = await this.request<GetTemplateResponse>({
-      url: `v3/templates/${encodeURIComponent(id)}`,
+      url: `v3/templates/${id}`,
       method: "GET",
     });
     return response.data;
@@ -260,7 +260,7 @@ export class ContractbookClient extends HttpClient {
     body: CreateDocumentRequest,
   ): Promise<CreateDocumentResponse> {
     const response = await this.request<CreateDocumentResponse>({
-      url: `v3/templates/${encodeURIComponent(id)}/create_document`,
+      url: `v3/templates/${id}/create_document`,
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),

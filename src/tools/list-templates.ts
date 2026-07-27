@@ -26,7 +26,11 @@ export interface ListTemplatesArgs {
 export function listTemplatesHandler(client: ContractbookClient) {
   return async (args: ListTemplatesArgs) => {
     try {
-      const response = await client.listTemplates(buildParams(args));
+      const params: Record<string, string | string[]> = {};
+      if (args.exclude_spaces !== undefined) {
+        params.exclude_spaces = String(args.exclude_spaces);
+      }
+      const response = await client.listTemplates(params);
       return {
         content: [
           { type: "text" as const, text: JSON.stringify(formatListTemplatesResponse(response)) },
@@ -41,16 +45,6 @@ export function listTemplatesHandler(client: ContractbookClient) {
       };
     }
   };
-}
-
-export function buildParams(args: ListTemplatesArgs): Record<string, string | string[]> {
-  const params: Record<string, string | string[]> = {};
-
-  if (args.exclude_spaces !== undefined) {
-    params.exclude_spaces = String(args.exclude_spaces);
-  }
-
-  return params;
 }
 
 function formatListTemplatesResponse(response: ListTemplatesResponse) {

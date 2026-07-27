@@ -1,20 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { ContractbookClient } from "../src/contractbook/client.js";
-import {
-  buildParams,
-  listTemplatesConfig,
-  listTemplatesHandler,
-} from "../src/tools/list-templates.js";
+import { listTemplatesConfig, listTemplatesHandler } from "../src/tools/list-templates.js";
 import { fakeFetch } from "./helpers/fake-fetch.js";
-
-function makeClient(fetchImpl: typeof fetch) {
-  return new ContractbookClient({
-    baseUrl: "http://test",
-    apiKey: "test-key",
-    fetchImpl,
-  });
-}
+import { makeClient } from "./helpers/make-client.js";
 
 describe("listTemplatesConfig", () => {
   it("accepts empty args", () => {
@@ -29,17 +17,6 @@ describe("listTemplatesConfig", () => {
 
   it("rejects a non-boolean exclude_spaces", () => {
     expect(() => listTemplatesConfig.inputSchema.parse({ exclude_spaces: "yes" })).toThrow();
-  });
-});
-
-describe("buildParams", () => {
-  it("returns empty params when no args", () => {
-    expect(buildParams({})).toEqual({});
-  });
-
-  it("stringifies exclude_spaces, including false", () => {
-    expect(buildParams({ exclude_spaces: false })).toEqual({ exclude_spaces: "false" });
-    expect(buildParams({ exclude_spaces: true })).toEqual({ exclude_spaces: "true" });
   });
 });
 
@@ -59,6 +36,20 @@ describe("listTemplatesHandler", () => {
     const request = requests[0];
     expect(request.headers.authorization).toBe("Bearer test-key");
     expect(request.url.searchParams.get("exclude_spaces")).toBe("true");
+  });
+
+  it("stringifies exclude_spaces=false and omits it when absent", async () => {
+    const { fetchImpl, requests } = fakeFetch([
+      { method: "GET", path: "/v3/templates", response: { templates: [] } },
+      { method: "GET", path: "/v3/templates", response: { templates: [] } },
+    ]);
+    const handler = listTemplatesHandler(makeClient(fetchImpl));
+
+    await handler({ exclude_spaces: false });
+    await handler({});
+
+    expect(requests[0].url.searchParams.get("exclude_spaces")).toBe("false");
+    expect(requests[1].url.searchParams.has("exclude_spaces")).toBe(false);
   });
 
   it("formats templates and strips non-whitelisted fields", async () => {

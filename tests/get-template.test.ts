@@ -1,18 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ContractbookClient } from "../src/contractbook/client.js";
 import { getTemplateConfig, getTemplateHandler } from "../src/tools/get-template.js";
 import { fakeFetch } from "./helpers/fake-fetch.js";
+import { makeClient } from "./helpers/make-client.js";
 
 const templateId = "1e013958-867e-43fb-8210-c98ab139beb6";
-
-function makeClient(fetchImpl: typeof fetch) {
-  return new ContractbookClient({
-    baseUrl: "http://test",
-    apiKey: "test-key",
-    fetchImpl,
-  });
-}
 
 describe("getTemplateConfig", () => {
   it("requires an id", () => {
