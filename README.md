@@ -15,6 +15,16 @@ pnpm install
 pnpm run build
 ```
 
+## Setup for Claude Desktop
+
+```sh
+npx @contractbook/mcp setup
+```
+
+Prompts for your Contractbook API key and adds the server to your existing
+Claude Desktop config, then restart Claude Desktop. Requires an existing config
+file.
+
 ## Running
 
 The server is launched by an MCP client, not run standalone. Environment variables:
@@ -23,14 +33,14 @@ The server is launched by an MCP client, not run standalone. Environment variabl
 | ----------------------- | -------- | ------------------------------ |
 | `CONTRACTBOOK_API_KEY`  | yes      | —                              |
 
-MCP client configuration:
+The `setup` command writes this entry:
 
 ```json
 {
   "mcpServers": {
     "contractbook": {
-      "command": "node",
-      "args": ["/absolute/path/to/contractbook-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@contractbook/mcp@<version>"],
       "env": { "CONTRACTBOOK_API_KEY": "<your-api-key>" }
     }
   }
