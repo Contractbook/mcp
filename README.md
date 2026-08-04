@@ -1,4 +1,4 @@
-# contractbook-mcp
+# @contractbook/mcp
 
 Model Context Protocol server for the [Contractbook API](https://api.contractbook.com/v3/docs/index.html). Runs locally over the STDIO transport — the MCP client spawns the process and talks JSON-RPC over stdin/stdout.
 

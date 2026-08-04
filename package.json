@@ -1,5 +1,5 @@
 {
-  "name": "contractbook-mcp",
+  "name": "@contractbook/mcp",
   "version": "0.0.1",
   "description": "Model Context Protocol server for the Contractbook API.",
   "keywords": [
@@ -12,6 +12,10 @@
     "model-context-protocol"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Contractbook/mcp.git"
+  },
   "bin": {
     "contractbook-mcp": "dist/index.js"
   },
@@ -19,13 +23,17 @@
     "dist/index.js"
   ],
   "type": "module",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "vite build",
     "check": "tsgo -p tsconfig.json",
     "dev": "vite build --watch",
     "fmt": "oxfmt",
     "lint": "oxlint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "^2.0.0-beta.3",
