@@ -41,8 +41,9 @@ MCP client configuration:
 
 | Tool               | Description                                                                   |
 | ------------------ | ----------------------------------------------------------------------------- |
-| `list_documents`   | Lists documents with filtering, sorting and cursor-based pagination           |
-| `search_documents` | Full-text search across document content and attachments, with match snippets |
+| `list_documents`       | Lists documents with filtering, sorting and cursor-based pagination           |
+| `search_documents`     | Full-text search across document content and attachments, with match snippets |
+| `get_document_content` | Returns a document's full text as markdown, plus OCR text of attachments      |
 
 ## Testing
 
