@@ -69,6 +69,19 @@ export interface SearchDocumentsResponse {
   pagination_meta?: PaginationMeta;
 }
 
+export interface UploadedFileContent {
+  id?: string;
+  text_markup?: string | null;
+  ocr_status?: string | null;
+}
+
+export interface DocumentContentResponse {
+  document?: {
+    markdown?: string;
+    uploaded_files?: UploadedFileContent[];
+  };
+}
+
 export interface TemplateLocation {
   id?: string;
   name?: string;
@@ -234,6 +247,14 @@ export class ContractbookClient extends HttpClient {
       url: "documents/search",
       method: "GET",
       params,
+    });
+    return response.data;
+  }
+
+  async getDocumentContent(id: string): Promise<DocumentContentResponse> {
+    const response = await this.request<DocumentContentResponse>({
+      url: `documents/${id}/markdown`,
+      method: "GET",
     });
     return response.data;
   }
