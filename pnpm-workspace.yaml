@@ -4,5 +4,4 @@ blockExoticSubdeps: true
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
-  - "@modelcontextprotocol/node@2.0.0-beta.3"
   - "@modelcontextprotocol/server@2.0.0-beta.3"
