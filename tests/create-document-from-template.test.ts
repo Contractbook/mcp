@@ -221,7 +221,10 @@ describe("createDocumentFromTemplateHandler", () => {
         path: `/v3/templates/${templateId}/create_document`,
         status: 201,
         response: {
-          document: { id: "doc-1", title: "Employment Contract – Jarek Owczarek (Account Executive)" },
+          document: {
+            id: "doc-1",
+            title: "Employment Contract – Jarek Owczarek (Account Executive)",
+          },
         },
       },
     ]);

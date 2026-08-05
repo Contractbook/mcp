@@ -31,10 +31,10 @@ it.
 
 The server is launched by an MCP client, not run standalone. Environment variables:
 
-| Variable                | Required | Default                        |
-| ----------------------- | -------- | ------------------------------ |
-| `CONTRACTBOOK_API_KEY`  | yes      | —                              |
-| `CONTRACTBOOK_APP_URL`  | no       | `https://app.contractbook.com` |
+| Variable               | Required | Default                        |
+| ---------------------- | -------- | ------------------------------ |
+| `CONTRACTBOOK_API_KEY` | yes      | —                              |
+| `CONTRACTBOOK_APP_URL` | no       | `https://app.contractbook.com` |
 
 `CONTRACTBOOK_APP_URL` is the web-app host used to build document links returned
 by the tools.
