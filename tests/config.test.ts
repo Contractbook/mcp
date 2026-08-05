@@ -15,6 +15,7 @@ describe("readConfig", () => {
     const config = readConfig({ CONTRACTBOOK_API_KEY: "key" });
     expect(config.apiKey).toBe("key");
     expect(config.baseUrl).toBe("https://api.contractbook.com");
+    expect(config.appUrl).toBe("https://app.contractbook.com");
   });
 
   it("honors the base URL override", () => {
@@ -25,11 +26,27 @@ describe("readConfig", () => {
     expect(config.baseUrl).toBe("https://api-staging.contractbook.com");
   });
 
+  it("honors the app URL override", () => {
+    const config = readConfig({
+      CONTRACTBOOK_API_KEY: "key",
+      CONTRACTBOOK_APP_URL: "https://app-staging.contractbook.com",
+    });
+    expect(config.appUrl).toBe("https://app-staging.contractbook.com");
+  });
+
   it("strips trailing slashes from the base URL", () => {
     const config = readConfig({
       CONTRACTBOOK_API_KEY: "key",
       CONTRACTBOOK_BASE_URL: "https://api.contractbook.com/",
     });
     expect(config.baseUrl).toBe("https://api.contractbook.com");
+  });
+
+  it("strips trailing slashes from the app URL", () => {
+    const config = readConfig({
+      CONTRACTBOOK_API_KEY: "key",
+      CONTRACTBOOK_APP_URL: "https://app.contractbook.com/",
+    });
+    expect(config.appUrl).toBe("https://app.contractbook.com");
   });
 });

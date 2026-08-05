@@ -16,9 +16,10 @@ import { searchDocumentsConfig, searchDocumentsHandler } from "./tools/search-do
 
 export interface ServerDependencies {
   client: ContractbookClient;
+  appUrl: string;
 }
 
-export function createServer({ client }: ServerDependencies): McpServer {
+export function createServer({ client, appUrl }: ServerDependencies): McpServer {
   const server = new McpServer({
     name: "contractbook-mcp",
     version: __VERSION__,
@@ -36,7 +37,7 @@ export function createServer({ client }: ServerDependencies): McpServer {
   server.registerTool(
     "create_document_from_template",
     createDocumentFromTemplateConfig,
-    createDocumentFromTemplateHandler(client),
+    createDocumentFromTemplateHandler(client, appUrl),
   );
 
   return server;
