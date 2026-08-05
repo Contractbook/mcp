@@ -8,7 +8,7 @@ export const getDocumentContentConfig = {
     "Returns the full text content of a document as markdown, plus the OCR text of any attachments. " +
     "Use this to read what a document actually says. Pass the document id from list_documents or search_documents.",
   inputSchema: z.object({
-    document_id: z.string().describe("The document id (UUID)"),
+    document_id: z.uuid().describe("The document id (UUID)"),
   }),
   annotations: {
     readOnlyHint: true,

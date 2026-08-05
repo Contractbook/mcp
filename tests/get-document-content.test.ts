@@ -22,9 +22,20 @@ describe("getDocumentContentConfig", () => {
   });
 
   it("accepts a document_id", () => {
-    expect(getDocumentContentConfig.inputSchema.parse({ document_id: "abc" })).toEqual({
-      document_id: "abc",
+    const id = "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f";
+    expect(getDocumentContentConfig.inputSchema.parse({ document_id: id })).toEqual({
+      document_id: id,
     });
+  });
+
+  it("rejects a document_id that is not a UUID", () => {
+    expect(() => getDocumentContentConfig.inputSchema.parse({ document_id: "abc" })).toThrow();
+  });
+
+  it("rejects a document_id that would alter the request path", () => {
+    for (const id of ["../../other", "a/b", "x?y=1", "x#y"]) {
+      expect(() => getDocumentContentConfig.inputSchema.parse({ document_id: id })).toThrow();
+    }
   });
 });
 
@@ -44,13 +55,13 @@ describe("getDocumentContentHandler", () => {
     const { fetchImpl, requests } = fakeFetch([
       {
         method: "GET",
-        path: "/documents/doc-1/markdown",
+        path: "/documents/3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f/markdown",
         response: { document: { markdown: "line #000: Hi", uploaded_files: [] } },
       },
     ]);
     const handler = getDocumentContentHandler(makeClient(fetchImpl));
 
-    const result = await handler({ document_id: "doc-1" });
+    const result = await handler({ document_id: "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f" });
 
     expect(requests[0].headers.authorization).toBe("Bearer test-key");
     const parsed = JSON.parse(result.content[0].text);
@@ -62,7 +73,7 @@ describe("getDocumentContentHandler", () => {
     const { fetchImpl } = fakeFetch([
       {
         method: "GET",
-        path: "/documents/doc-1/markdown",
+        path: "/documents/3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f/markdown",
         response: {
           document: {
             markdown: "line #000: Body",
@@ -80,7 +91,9 @@ describe("getDocumentContentHandler", () => {
     ]);
     const handler = getDocumentContentHandler(makeClient(fetchImpl));
 
-    const parsed = JSON.parse((await handler({ document_id: "doc-1" })).content[0].text);
+    const parsed = JSON.parse(
+      (await handler({ document_id: "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f" })).content[0].text,
+    );
     expect(parsed.markdown).toBe("Body");
     expect(parsed.attachments).toEqual([
       { id: "f-1", ocr_status: "completed", text: "scanned text" },
@@ -91,14 +104,14 @@ describe("getDocumentContentHandler", () => {
     const { fetchImpl } = fakeFetch([
       {
         method: "GET",
-        path: "/documents/doc-1/markdown",
+        path: "/documents/3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f/markdown",
         status: 404,
         response: { error: "not found" },
       },
     ]);
     const handler = getDocumentContentHandler(makeClient(fetchImpl));
 
-    const result = await handler({ document_id: "doc-1" });
+    const result = await handler({ document_id: "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f" });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("404");
   });
