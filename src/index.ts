@@ -8,7 +8,7 @@ import { runSetup } from "./setup.js";
 async function serve(): Promise<void> {
   const config = readConfig(process.env);
   const client = new ContractbookClient({ baseUrl: config.baseUrl, apiKey: config.apiKey });
-  const server = createServer({ client });
+  const server = createServer({ client, appUrl: config.appUrl });
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

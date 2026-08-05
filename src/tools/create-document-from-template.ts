@@ -66,7 +66,9 @@ export const createDocumentFromTemplateConfig = {
     "Creates a new draft document in Contractbook from a template, optionally overriding the template's " +
     "title, parties, data field values, tags and other settings. " +
     "Call get_template first to see the template's data fields and pass overrides via data_fields. " +
-    "With no overrides the document is created with the template's defaults.",
+    "With no overrides the document is created with the template's defaults. " +
+    "The response includes the draft's url — always share this link with the user immediately " +
+    "after the document is created.",
   inputSchema: z.object({
     template_id: z.uuid().describe("ID of the template to create the document from"),
     title: z.string().optional().describe("Document title"),
@@ -117,13 +119,16 @@ export type CreateDocumentFromTemplateArgs = z.infer<
   typeof createDocumentFromTemplateConfig.inputSchema
 >;
 
-export function createDocumentFromTemplateHandler(client: ContractbookClient) {
+export function createDocumentFromTemplateHandler(client: ContractbookClient, appUrl: string) {
   return async (args: CreateDocumentFromTemplateArgs) => {
     try {
       const response = await client.createDocumentFromTemplate(args.template_id, buildBody(args));
       return {
         content: [
-          { type: "text" as const, text: JSON.stringify(formatCreatedDocumentResponse(response)) },
+          {
+            type: "text" as const,
+            text: JSON.stringify(formatCreatedDocumentResponse(response, appUrl)),
+          },
         ],
       };
     } catch (error) {
@@ -180,7 +185,7 @@ export function buildBody(args: CreateDocumentFromTemplateArgs): CreateDocumentR
   return { document };
 }
 
-function formatCreatedDocumentResponse(response: CreateDocumentResponse) {
+function formatCreatedDocumentResponse(response: CreateDocumentResponse, appUrl: string) {
   const document = response.document;
   if (!document) {
     return { document: null };
@@ -188,6 +193,7 @@ function formatCreatedDocumentResponse(response: CreateDocumentResponse) {
   return {
     document: {
       id: document.id,
+      url: document.id ? `${appUrl}/documents/${document.id}` : undefined,
       title: document.title,
       state: document.state,
       type: document.type,
