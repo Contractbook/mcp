@@ -33,9 +33,13 @@ The server is launched by an MCP client, not run standalone. Environment variabl
 | ----------------------- | -------- | ------------------------------ |
 | `CONTRACTBOOK_API_KEY`  | yes      | —                              |
 | `CONTRACTBOOK_BASE_URL` | no       | `https://api.contractbook.com` |
+| `CONTRACTBOOK_APP_URL`  | no       | `https://app.contractbook.com` |
 
 `CONTRACTBOOK_BASE_URL` is the API host root (no version prefix). Point it at
 `https://api-staging.contractbook.com` to use staging.
+
+`CONTRACTBOOK_APP_URL` is the web-app host used to build document links returned
+by the tools.
 
 The `setup` command writes this entry:
 

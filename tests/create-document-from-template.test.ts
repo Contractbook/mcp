@@ -9,6 +9,7 @@ import { fakeFetch } from "./helpers/fake-fetch.js";
 import { makeClient } from "./helpers/make-client.js";
 
 const templateId = "1e013958-867e-43fb-8210-c98ab139beb6";
+const appUrl = "https://app.test";
 
 describe("createDocumentFromTemplateConfig", () => {
   it("requires a template_id", () => {
@@ -113,7 +114,7 @@ describe("createDocumentFromTemplateHandler", () => {
         response: { document: { id: "doc-1" } },
       },
     ]);
-    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl));
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
 
     await handler({
       template_id: templateId,
@@ -183,13 +184,14 @@ describe("createDocumentFromTemplateHandler", () => {
         },
       },
     ]);
-    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl));
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({ template_id: templateId });
     expect(result.isError).toBeUndefined();
     const parsed = JSON.parse(result.content[0].text);
     const document = parsed.document;
     expect(document.id).toBe("doc-1");
+    expect(document.url).toBe("https://app.test/documents/doc-1");
     expect(document.state).toBe("draft");
     expect(document.source_template_id).toBe(templateId);
     expect(document.version).toBeUndefined();
@@ -221,7 +223,7 @@ describe("createDocumentFromTemplateHandler", () => {
         response: { error: { title: ["is too long"] } },
       },
     ]);
-    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl));
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({ template_id: templateId, title: "x".repeat(500) });
     expect(result.isError).toBe(true);
