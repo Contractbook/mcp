@@ -21,9 +21,11 @@ pnpm run build
 npx @contractbook/mcp setup
 ```
 
-Prompts for your Contractbook API key and adds the server to your existing
-Claude Desktop config, then restart Claude Desktop. Requires an existing config
-file.
+Prompts for your Contractbook API key and adds the server to your Claude
+Desktop config. Restart Claude Desktop afterwards to pick up the change.
+
+The config file must already exist — the command edits it, but will not create
+it.
 
 ## Running
 
