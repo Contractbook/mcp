@@ -45,15 +45,9 @@ export class HttpClient {
 
   async request<T>(config: RequestConfig): Promise<HttpResponse<T>> {
     const url = new URL(config.url, `${this.baseUrl}/`);
-    if (config.params) {
-      for (const [key, value] of Object.entries(config.params)) {
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            url.searchParams.append(key, item);
-          }
-        } else {
-          url.searchParams.set(key, value);
-        }
+    for (const [key, value] of Object.entries(config.params ?? {})) {
+      for (const item of Array.isArray(value) ? value : [value]) {
+        url.searchParams.append(key, item);
       }
     }
 
