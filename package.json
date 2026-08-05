@@ -31,7 +31,8 @@
     "check": "tsgo -p tsconfig.json",
     "dev": "vite build --watch",
     "fmt": "oxfmt",
-    "lint": "oxlint",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
   },
