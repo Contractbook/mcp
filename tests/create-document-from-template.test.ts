@@ -191,7 +191,7 @@ describe("createDocumentFromTemplateHandler", () => {
     const parsed = JSON.parse(result.content[0].text);
     const document = parsed.document;
     expect(document.id).toBe("doc-1");
-    expect(document.url).toBe("https://app.test/documents/doc-1");
+    expect(document.url).toBe("https://app.test/draft/NDA%20with%20ACME/doc-1");
     expect(document.state).toBe("draft");
     expect(document.source_template_id).toBe(templateId);
     expect(document.version).toBeUndefined();
@@ -212,6 +212,42 @@ describe("createDocumentFromTemplateHandler", () => {
         value: "ACME Inc",
       },
     ]);
+  });
+
+  it("percent-encodes special characters in the draft url title segment", async () => {
+    const { fetchImpl } = fakeFetch([
+      {
+        method: "POST",
+        path: `/v3/templates/${templateId}/create_document`,
+        status: 201,
+        response: {
+          document: { id: "doc-1", title: "Employment Contract – Jarek Owczarek (Account Executive)" },
+        },
+      },
+    ]);
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
+
+    const result = await handler({ template_id: templateId });
+    const document = JSON.parse(result.content[0].text).document;
+    expect(document.url).toBe(
+      "https://app.test/draft/Employment%20Contract%20%E2%80%93%20Jarek%20Owczarek%20(Account%20Executive)/doc-1",
+    );
+  });
+
+  it("falls back to Untitled in the draft url when the document has no title", async () => {
+    const { fetchImpl } = fakeFetch([
+      {
+        method: "POST",
+        path: `/v3/templates/${templateId}/create_document`,
+        status: 201,
+        response: { document: { id: "doc-1" } },
+      },
+    ]);
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
+
+    const result = await handler({ template_id: templateId });
+    const document = JSON.parse(result.content[0].text).document;
+    expect(document.url).toBe("https://app.test/draft/Untitled/doc-1");
   });
 
   it("returns isError with the validation body on HTTP failure", async () => {

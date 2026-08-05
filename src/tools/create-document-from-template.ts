@@ -185,6 +185,11 @@ export function buildBody(args: CreateDocumentFromTemplateArgs): CreateDocumentR
   return { document };
 }
 
+// The app's draft route is /draft/{encoded-title}/{id}; /documents/{id} redirects to the contract list.
+function draftUrl(appUrl: string, title: string | undefined, id: string): string {
+  return `${appUrl}/draft/${encodeURIComponent(title ?? "Untitled")}/${id}`;
+}
+
 function formatCreatedDocumentResponse(response: CreateDocumentResponse, appUrl: string) {
   const document = response.document;
   if (!document) {
@@ -193,7 +198,7 @@ function formatCreatedDocumentResponse(response: CreateDocumentResponse, appUrl:
   return {
     document: {
       id: document.id,
-      url: document.id ? `${appUrl}/documents/${document.id}` : undefined,
+      url: document.id ? draftUrl(appUrl, document.title, document.id) : undefined,
       title: document.title,
       state: document.state,
       type: document.type,
