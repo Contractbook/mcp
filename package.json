@@ -1,6 +1,6 @@
 {
   "name": "@contractbook/mcp",
-  "version": "0.0.1-rc3",
+  "version": "0.0.1",
   "description": "Model Context Protocol server for the Contractbook API.",
   "keywords": [
     "ai",
