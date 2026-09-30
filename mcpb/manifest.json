@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "contractbook",
+  "display_name": "Contractbook",
+  "description": "Search, read and draft Contractbook documents from Claude.",
+  "long_description": "Connects Claude to your Contractbook account. Claude can list and search documents, read their full text, browse templates and create draft documents from a template. It never sends a draft for signature.",
+  "author": {
+    "name": "Contractbook",
+    "url": "https://contractbook.com"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "CONTRACTBOOK_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Contractbook API key",
+      "description": "Your Contractbook API key. Claude Desktop keeps it in your operating system's keychain.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

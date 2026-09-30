@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:mcpb": "pnpm build && node scripts/pack-mcpb.mjs",
     "check": "tsgo -p tsconfig.json",
     "dev": "vite build --watch",
     "fmt": "oxfmt",
