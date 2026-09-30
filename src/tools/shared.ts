@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TemplateDataField } from "../contractbook/client.js";
+
 export const dataFieldTypes = ["text", "number", "date", "select", "checkbox"] as const;
 
 export const signatureVerificationMethods = [
@@ -35,3 +37,26 @@ export const dataFieldSchema = z.object({
     .optional()
     .describe("Additional config: `options` (string array) for select, `label` for checkbox"),
 });
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export function formatDataField(field: TemplateDataField) {
+  return {
+    id: field.id,
+    name: field.name,
+    type: field.type,
+    value: field.value,
+    description: field.description,
+    required: field.required,
+    config: field.config && {
+      label: field.config.label,
+      options: field.config.options,
+    },
+    formatting: field.formatting && {
+      grouping: field.formatting.grouping,
+      fractional: field.formatting.fractional,
+    },
+  };
+}

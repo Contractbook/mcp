@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { ContractbookClient, ListDocumentsResponse } from "../contractbook/client.js";
+import { errorMessage } from "./shared.js";
 
 const documentStates = [
   "draft",
@@ -97,9 +98,7 @@ export function listDocumentsHandler(client: ContractbookClient) {
     } catch (error) {
       return {
         isError: true,
-        content: [
-          { type: "text" as const, text: error instanceof Error ? error.message : String(error) },
-        ],
+        content: [{ type: "text" as const, text: errorMessage(error) }],
       };
     }
   };

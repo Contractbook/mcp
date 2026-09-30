@@ -3,7 +3,11 @@ export interface Route {
   path: string | RegExp;
   status?: number;
   contentType?: string;
-  response: unknown;
+  response?: unknown;
+  /** Raw response body, sent as-is instead of serializing `response`. */
+  body?: string;
+  /** Never respond; reject with the signal's reason once the request is aborted. */
+  hang?: boolean;
 }
 
 export interface CapturedRequest {
@@ -14,31 +18,54 @@ export interface CapturedRequest {
   signal: AbortSignal | null | undefined;
 }
 
-export function fakeFetch(routes: Route[]): {
+export interface FakeFetchOptions {
+  /** Match each call to any unused route instead of requiring calls in route order. */
+  anyOrder?: boolean;
+}
+
+function matches(route: Route, method: string, url: URL): boolean {
+  const pathMatch =
+    typeof route.path === "string" ? url.pathname === route.path : route.path.test(url.pathname);
+  return route.method === method && pathMatch;
+}
+
+export function fakeFetch(
+  routes: Route[],
+  options: FakeFetchOptions = {},
+): {
   fetchImpl: typeof fetch;
   requests: CapturedRequest[];
+  /** Routes that have not been requested yet. */
+  unused: Route[];
 } {
   const requests: CapturedRequest[] = [];
-  let callIndex = 0;
+  const unused = [...routes];
 
   const fetchImpl = async (url: URL, init: RequestInit & { method: string }): Promise<Response> => {
     const { method } = init;
 
-    if (callIndex >= routes.length) {
+    if (unused.length === 0) {
       throw new Error(
-        `Unexpected call #${callIndex + 1}: ${method} ${url.pathname} (only ${routes.length} route(s) expected)`,
+        `Unexpected call #${requests.length + 1}: ${method} ${url.pathname} (only ${routes.length} route(s) expected)`,
       );
     }
 
-    const route = routes[callIndex];
-    const pathMatch =
-      typeof route.path === "string" ? url.pathname === route.path : route.path.test(url.pathname);
+    const routeIndex = options.anyOrder
+      ? unused.findIndex((candidate) => matches(candidate, method, url))
+      : matches(unused[0], method, url)
+        ? 0
+        : -1;
 
-    if (route.method !== method || !pathMatch) {
+    if (routeIndex === -1) {
+      const expected = options.anyOrder
+        ? unused.map((candidate) => `${candidate.method} ${candidate.path}`).join(" or ")
+        : `${unused[0].method} ${unused[0].path}`;
       throw new Error(
-        `Call #${callIndex + 1}: expected ${route.method} ${route.path}, got ${method} ${url.pathname}`,
+        `Call #${requests.length + 1}: expected ${expected}, got ${method} ${url.pathname}`,
       );
     }
+
+    const [route] = unused.splice(routeIndex, 1);
 
     requests.push({
       method,
@@ -48,12 +75,23 @@ export function fakeFetch(routes: Route[]): {
       signal: init.signal,
     });
 
-    callIndex++;
+    if (route.hang) {
+      const { signal } = init;
+      return new Promise<Response>((_resolve, reject) => {
+        if (signal?.aborted) {
+          reject(signal.reason);
+          return;
+        }
+        signal?.addEventListener("abort", () => reject(signal.reason), { once: true });
+      });
+    }
 
     const contentType = route.contentType ?? "application/json";
-    const body = contentType.includes("application/json")
-      ? JSON.stringify(route.response)
-      : (route.response as string);
+    const body =
+      route.body ??
+      (contentType.includes("application/json")
+        ? JSON.stringify(route.response)
+        : (route.response as string));
 
     return new Response(body, {
       status: route.status ?? 200,
@@ -61,5 +99,5 @@ export function fakeFetch(routes: Route[]): {
     });
   };
 
-  return { fetchImpl: fetchImpl as typeof fetch, requests };
+  return { fetchImpl: fetchImpl as typeof fetch, requests, unused };
 }

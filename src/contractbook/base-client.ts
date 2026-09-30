@@ -18,12 +18,18 @@ export interface HttpResponse<T = unknown> {
   data: T;
 }
 
+const MAX_ERROR_BODY_LENGTH = 500;
+
+function truncate(text: string): string {
+  return text.length > MAX_ERROR_BODY_LENGTH ? `${text.slice(0, MAX_ERROR_BODY_LENGTH)}…` : text;
+}
+
 export class HttpError extends Error {
   public readonly status: number;
   public readonly body: unknown;
 
   constructor(status: number, body: unknown) {
-    super(`HTTP ${status}: ${typeof body === "string" ? body : JSON.stringify(body)}`);
+    super(`HTTP ${status}: ${truncate(typeof body === "string" ? body : JSON.stringify(body))}`);
     this.name = "HttpError";
     this.status = status;
     this.body = body;
@@ -60,18 +66,29 @@ export class HttpClient {
       method: config.method,
       headers,
       body: config.body,
-      signal: config.signal ?? AbortSignal.timeout(30_000),
+      signal: config.signal
+        ? AbortSignal.any([config.signal, AbortSignal.timeout(30_000)])
+        : AbortSignal.timeout(30_000),
     });
 
     const contentType = response.headers.get("content-type") ?? "";
-    const data = contentType.includes("application/json")
-      ? ((await response.json()) as T)
-      : ((await response.text()) as T);
+    const text = await response.text();
+    let data: unknown = text;
+    if (contentType.includes("application/json")) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        // An error response with a malformed body should still surface its HTTP status.
+        if (response.ok) {
+          throw error;
+        }
+      }
+    }
 
     if (!response.ok) {
       throw new HttpError(response.status, data);
     }
 
-    return { status: response.status, data };
+    return { status: response.status, data: data as T };
   }
 }
