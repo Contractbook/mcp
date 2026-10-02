@@ -29,7 +29,7 @@ export class HttpError extends Error {
   public readonly body: unknown;
 
   constructor(status: number, body: unknown) {
-    super(`HTTP ${status}: ${truncate(typeof body === "string" ? body : JSON.stringify(body))}`);
+    super(`HTTP ${status}: ${typeof body === "string" ? truncate(body) : JSON.stringify(body)}`);
     this.name = "HttpError";
     this.status = status;
     this.body = body;
@@ -78,7 +78,6 @@ export class HttpClient {
       try {
         data = JSON.parse(text);
       } catch (error) {
-        // An error response with a malformed body should still surface its HTTP status.
         if (response.ok) {
           throw error;
         }

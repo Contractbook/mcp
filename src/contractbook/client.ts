@@ -113,6 +113,7 @@ export interface TemplateDataFieldConfig {
 export interface TemplateDataFieldFormatting {
   grouping?: string | null;
   fractional?: boolean | null;
+  date?: string | null;
 }
 
 export interface TemplateDataField {
@@ -236,7 +237,6 @@ export interface CreateDocumentResponse {
   document?: CreatedDocument;
 }
 
-// The v3 show, create and update endpoints render the same document serializer.
 export type GetDocumentResponse = CreateDocumentResponse;
 
 export class ContractbookClient extends HttpClient {
@@ -269,8 +269,6 @@ export class ContractbookClient extends HttpClient {
     return response.data;
   }
 
-  // Returns the full document, including its ProseMirror template, comments and events,
-  // so it is much heavier than the markdown endpoint. Only call it when the extra data is needed.
   async getDocument(id: string, signal?: AbortSignal): Promise<GetDocumentResponse> {
     const response = await this.request<GetDocumentResponse>({
       url: `v3/documents/${id}`,

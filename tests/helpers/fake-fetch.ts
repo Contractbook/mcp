@@ -4,9 +4,7 @@ export interface Route {
   status?: number;
   contentType?: string;
   response?: unknown;
-  /** Raw response body, sent as-is instead of serializing `response`. */
   body?: string;
-  /** Never respond; reject with the signal's reason once the request is aborted. */
   hang?: boolean;
 }
 
@@ -19,7 +17,6 @@ export interface CapturedRequest {
 }
 
 export interface FakeFetchOptions {
-  /** Match each call to any unused route instead of requiring calls in route order. */
   anyOrder?: boolean;
 }
 
@@ -35,7 +32,6 @@ export function fakeFetch(
 ): {
   fetchImpl: typeof fetch;
   requests: CapturedRequest[];
-  /** Routes that have not been requested yet. */
   unused: Route[];
 } {
   const requests: CapturedRequest[] = [];

@@ -66,9 +66,16 @@ describe("getTemplateHandler", () => {
                 description: "Counterparty name",
                 required: true,
                 config: { label: null, options: ["a", "b"], internal: "junk" },
-                formatting: { grouping: "comma", fractional: true, junk: 1 },
+                formatting: { grouping: "comma", fractional: true },
                 source: "ai",
                 source_mapping: "secret",
+              },
+              {
+                id: "7c1d0f3e-2b4a-4e5f-8a9b-0c1d2e3f4a5b",
+                name: "Start date",
+                type: "date",
+                value: "2026-10-01",
+                formatting: { date: "D MMM YYYY" },
               },
             ],
           },
@@ -96,6 +103,13 @@ describe("getTemplateHandler", () => {
         required: true,
         config: { label: null, options: ["a", "b"] },
         formatting: { grouping: "comma", fractional: true },
+      },
+      {
+        id: "7c1d0f3e-2b4a-4e5f-8a9b-0c1d2e3f4a5b",
+        name: "Start date",
+        type: "date",
+        value: "2026-10-01",
+        formatting: { date: "D MMM YYYY" },
       },
     ]);
   });

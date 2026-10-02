@@ -1,3 +1,4 @@
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -102,7 +103,10 @@ describe("getDocumentContentHandler", () => {
     return request as CapturedRequest;
   }
 
-  /** Fails fast instead of waiting for the vitest timeout when the handler never settles. */
+  function contextWith(signal: AbortSignal) {
+    return { mcpReq: { signal } } as unknown as ServerContext;
+  }
+
   function settlesQuickly<T>(promise: Promise<T>): Promise<T> {
     return Promise.race([
       promise,
@@ -186,7 +190,7 @@ describe("getDocumentContentHandler", () => {
       const { handler, requests } = setup([markdownRoute({ hang: true })]);
       const cancellation = new AbortController();
 
-      const pending = handler({ document_id: id }, { mcpReq: { signal: cancellation.signal } });
+      const pending = handler({ document_id: id }, contextWith(cancellation.signal));
       cancellation.abort();
       const result = await settlesQuickly(pending);
 
@@ -226,7 +230,7 @@ describe("getDocumentContentHandler", () => {
                   description: "Annual salary",
                   required: true,
                   config: {},
-                  formatting: { grouping: "dot", fractional: false, internal: "junk" },
+                  formatting: { grouping: "dot", fractional: false },
                   source: null,
                   source_mapping: null,
                   source_sync_type: null,
@@ -246,6 +250,7 @@ describe("getDocumentContentHandler", () => {
                   name: "Start date",
                   type: "date",
                   value: "2026-10-01",
+                  formatting: { date: "D MMM YYYY" },
                 },
               ],
             },
@@ -280,6 +285,7 @@ describe("getDocumentContentHandler", () => {
           name: "Start date",
           type: "date",
           value: "2026-10-01",
+          formatting: { date: "D MMM YYYY" },
         },
       ]);
     });
@@ -359,13 +365,29 @@ describe("getDocumentContentHandler", () => {
 
       const pending = handler(
         { document_id: id, include_data_fields: true },
-        { mcpReq: { signal: cancellation.signal } },
+        contextWith(cancellation.signal),
       );
       cancellation.abort();
       const result = await settlesQuickly(pending);
 
       expect(result.isError).toBe(true);
       expect(requestTo(requests, markdownPath).signal?.aborted).toBe(true);
+      expect(requestTo(requests, documentPath).signal?.aborted).toBe(true);
+    });
+
+    it("rejects when the MCP client cancels while waiting for data fields", async () => {
+      const { handler, requests } = setup([markdownRoute(), documentRoute({ hang: true })]);
+      const cancellation = new AbortController();
+
+      const pending = handler(
+        { document_id: id, include_data_fields: true },
+        contextWith(cancellation.signal),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(requestTo(requests, markdownPath).signal?.aborted).toBe(false);
+      cancellation.abort();
+
+      await expect(settlesQuickly(pending)).rejects.toMatchObject({ name: "AbortError" });
       expect(requestTo(requests, documentPath).signal?.aborted).toBe(true);
     });
 

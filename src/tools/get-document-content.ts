@@ -1,3 +1,4 @@
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 import type {
@@ -8,7 +9,8 @@ import type {
 } from "../contractbook/client.js";
 import { errorMessage, formatDataField } from "./shared.js";
 
-// Once the content has arrived, wait at most this long for the heavier data fields request.
+// Once the content has arrived, wait at most this long for the data fields request.
+// The request's own 30s timeout still applies, so the actual wait can be shorter.
 export const DATA_FIELDS_GRACE_MS = 10_000;
 
 export const getDocumentContentConfig = {
@@ -16,8 +18,8 @@ export const getDocumentContentConfig = {
   description:
     "Returns the full text content of a document as markdown, plus the OCR text of any attachments. " +
     "Set include_data_fields to also get the document's data fields (id, name, type, value, description, " +
-    "required, config, and formatting: number display settings with a thousands separator `grouping` and " +
-    "`fractional`); this costs an extra, heavier API request, so only set it when you need them. " +
+    "required, config, formatting); this costs an extra, heavier API request, so only set it when you need them. " +
+    "Values are raw: dates are YYYY-MM-DD, numbers are plain. `formatting` is how Contractbook displays them; use it when showing a value to the user, never when setting one. " +
     "If the data fields can't be fetched, data_fields is null and data_fields_error says why; " +
     "the text is still returned. " +
     "Use this to read what a document actually says. Pass the document id from list_documents or search_documents.",
@@ -39,15 +41,10 @@ export interface GetDocumentContentArgs {
   include_data_fields?: boolean;
 }
 
-// The part of the MCP SDK's ServerContext this tool uses.
-export interface ToolContext {
-  mcpReq?: { signal?: AbortSignal };
-}
-
 type DataFieldsResult = { ok: true; response: GetDocumentResponse } | { ok: false; error: unknown };
 
 export function getDocumentContentHandler(client: ContractbookClient) {
-  return async (args: GetDocumentContentArgs, ctx?: ToolContext) => {
+  return async (args: GetDocumentContentArgs, ctx?: ServerContext) => {
     const cancelled = ctx?.mcpReq?.signal;
     const controller = new AbortController();
     const dataFieldsRequest: Promise<DataFieldsResult> | undefined = args.include_data_fields
@@ -78,23 +75,35 @@ export function getDocumentContentHandler(client: ContractbookClient) {
       };
     }
 
-    const result: Record<string, unknown> = content;
-    if (dataFieldsRequest) {
-      const timer = setTimeout(
-        () =>
-          controller.abort(
-            new DOMException("Timed out waiting for the data fields request", "TimeoutError"),
-          ),
-        DATA_FIELDS_GRACE_MS,
-      );
-      try {
-        Object.assign(result, formatDataFields(await dataFieldsRequest));
-      } finally {
-        clearTimeout(timer);
-      }
+    if (!dataFieldsRequest) {
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(content) }],
+      };
+    }
+
+    const timer = setTimeout(
+      () =>
+        controller.abort(
+          new DOMException("Timed out waiting for the data fields request", "TimeoutError"),
+        ),
+      DATA_FIELDS_GRACE_MS,
+    );
+    let dataFields: DataFieldsResult;
+    try {
+      dataFields = await dataFieldsRequest;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (cancelled?.aborted) {
+      throw cancelled.reason;
     }
     return {
-      content: [{ type: "text" as const, text: JSON.stringify(result) }],
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({ ...content, ...formatDataFields(dataFields) }),
+        },
+      ],
     };
   };
 }
@@ -108,7 +117,6 @@ export function stripLineNumbers(markdown: string): string {
 
 function formatContent(markdownResponse: DocumentContentResponse) {
   const content = markdownResponse?.document;
-  // A proxy or login page answering with 200 must not look like an empty document.
   if (typeof content !== "object" || content === null) {
     throw new Error("unexpected response from the markdown API");
   }

@@ -7,7 +7,8 @@ export const getTemplateConfig = {
   title: "Get Template",
   description:
     "Gets a template by ID, including its data fields (id, name, type, value, description, required, " +
-    "config, and formatting: number display settings with a thousands separator `grouping` and `fractional`). " +
+    "config, formatting). " +
+    "Values are raw: dates are YYYY-MM-DD, numbers are plain. `formatting` is how Contractbook displays them; use it when showing a value to the user, never when setting one. " +
     "Use this to discover which data fields a template has before calling create_document_from_template.",
   inputSchema: z.object({
     id: z.uuid().describe("Template ID (UUID), from list_templates"),

@@ -54,9 +54,6 @@ export function formatDataField(field: TemplateDataField) {
       label: field.config.label,
       options: field.config.options,
     },
-    formatting: field.formatting && {
-      grouping: field.formatting.grouping,
-      fractional: field.formatting.fractional,
-    },
+    formatting: field.formatting,
   };
 }
