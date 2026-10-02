@@ -269,4 +269,23 @@ describe("createDocumentFromTemplateHandler", () => {
     expect(result.content[0].text).toContain("422");
     expect(result.content[0].text).toContain("is too long");
   });
+
+  it("does not truncate a long JSON validation error", async () => {
+    const errors = Object.fromEntries(
+      Array.from({ length: 30 }, (_, i) => [`data_fields.${i}.value`, ["is invalid"]]),
+    );
+    const { fetchImpl } = fakeFetch([
+      {
+        method: "POST",
+        path: `/v3/templates/${templateId}/create_document`,
+        status: 422,
+        response: { error: errors },
+      },
+    ]);
+    const handler = createDocumentFromTemplateHandler(makeClient(fetchImpl), appUrl);
+
+    const result = await handler({ template_id: templateId });
+    expect(result.content[0].text).toBe(`HTTP 422: ${JSON.stringify({ error: errors })}`);
+    expect(result.content[0].text.length).toBeGreaterThan(500);
+  });
 });

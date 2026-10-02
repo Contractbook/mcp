@@ -55,14 +55,14 @@ The `setup` command writes this entry:
 
 ## Available MCP Tools
 
-| Tool                            | Description                                                                   |
-| ------------------------------- | ----------------------------------------------------------------------------- |
-| `list_documents`                | Lists documents with filtering, sorting and cursor-based pagination           |
-| `search_documents`              | Full-text search across document content and attachments, with match snippets |
-| `get_document_content`          | Returns a document's full text as markdown, plus OCR text of attachments      |
-| `list_templates`                | Lists the contract templates available to the user                            |
-| `get_template`                  | Returns a template's details, including its data fields                       |
-| `create_document_from_template` | Creates a draft document from a template, with optional overrides             |
+| Tool                            | Description                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `list_documents`                | Lists documents with filtering, sorting and cursor-based pagination                                |
+| `search_documents`              | Full-text search across document content and attachments, with match snippets                      |
+| `get_document_content`          | Returns a document's full text as markdown and OCR text of attachments; optionally its data fields |
+| `list_templates`                | Lists the contract templates available to the user                                                 |
+| `get_template`                  | Returns a template's details, including its data fields                                            |
+| `create_document_from_template` | Creates a draft document from a template, with optional overrides                                  |
 
 All tools are read-only except `create_document_from_template`, which creates a
 draft. Drafts are not sent for signature — the returned url opens the draft in

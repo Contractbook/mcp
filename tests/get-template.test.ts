@@ -66,8 +66,16 @@ describe("getTemplateHandler", () => {
                 description: "Counterparty name",
                 required: true,
                 config: { label: null, options: ["a", "b"], internal: "junk" },
+                formatting: { grouping: "comma", fractional: true },
                 source: "ai",
                 source_mapping: "secret",
+              },
+              {
+                id: "7c1d0f3e-2b4a-4e5f-8a9b-0c1d2e3f4a5b",
+                name: "Start date",
+                type: "date",
+                value: "2026-10-01",
+                formatting: { date: "D MMM YYYY" },
               },
             ],
           },
@@ -85,7 +93,7 @@ describe("getTemplateHandler", () => {
     expect(template.slug).toBeUndefined();
     expect(template.owner_id).toBeUndefined();
     expect(template.attachments).toEqual([{ original: "https://example.com/a.pdf" }]);
-    expect(template.data_fields).toEqual([
+    expect(template.data_fields).toStrictEqual([
       {
         id: "5f0f7cb1-9e5f-4c66-9f6d-6a37f74071d1",
         name: "Company Name",
@@ -94,6 +102,14 @@ describe("getTemplateHandler", () => {
         description: "Counterparty name",
         required: true,
         config: { label: null, options: ["a", "b"] },
+        formatting: { grouping: "comma", fractional: true },
+      },
+      {
+        id: "7c1d0f3e-2b4a-4e5f-8a9b-0c1d2e3f4a5b",
+        name: "Start date",
+        type: "date",
+        value: "2026-10-01",
+        formatting: { date: "D MMM YYYY" },
       },
     ]);
   });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { ContractbookClient, ListTemplatesResponse } from "../contractbook/client.js";
+import { errorMessage } from "./shared.js";
 
 export const listTemplatesConfig = {
   title: "List Templates",
@@ -39,9 +40,7 @@ export function listTemplatesHandler(client: ContractbookClient) {
     } catch (error) {
       return {
         isError: true,
-        content: [
-          { type: "text" as const, text: error instanceof Error ? error.message : String(error) },
-        ],
+        content: [{ type: "text" as const, text: errorMessage(error) }],
       };
     }
   };
