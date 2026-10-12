@@ -2,7 +2,7 @@ import type { ServerContext } from "@modelcontextprotocol/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  DATA_FIELDS_GRACE_MS,
+  DOCUMENT_DETAILS_GRACE_MS,
   getDocumentContentConfig,
   getDocumentContentHandler,
   stripLineNumbers,
@@ -27,6 +27,20 @@ describe("getDocumentContentConfig", () => {
     expect(
       getDocumentContentConfig.inputSchema.parse({ document_id: id, include_data_fields: true }),
     ).toEqual({ document_id: id, include_data_fields: true });
+  });
+
+  it("accepts include_space", () => {
+    const id = "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f";
+    expect(
+      getDocumentContentConfig.inputSchema.parse({ document_id: id, include_space: true }),
+    ).toEqual({ document_id: id, include_space: true });
+  });
+
+  it("rejects a non-boolean include_space", () => {
+    const id = "3f8b2c1e-5d4a-4b6c-9e7f-1a2b3c4d5e6f";
+    expect(() =>
+      getDocumentContentConfig.inputSchema.parse({ document_id: id, include_space: 1 }),
+    ).toThrow();
   });
 
   it("rejects a non-boolean include_data_fields", () => {
@@ -396,7 +410,7 @@ describe("getDocumentContentHandler", () => {
       const { handler, requests } = setup([markdownRoute(), documentRoute({ hang: true })]);
 
       const pending = handler({ document_id: id, include_data_fields: true });
-      await vi.advanceTimersByTimeAsync(DATA_FIELDS_GRACE_MS);
+      await vi.advanceTimersByTimeAsync(DOCUMENT_DETAILS_GRACE_MS);
       const result = await pending;
 
       expect(result.isError).toBeUndefined();
@@ -404,7 +418,7 @@ describe("getDocumentContentHandler", () => {
       expect(parsed.markdown).toBe("Hi");
       expect(parsed.data_fields).toBeNull();
       expect(parsed.data_fields_error).toBe(
-        "Failed to fetch data fields: Timed out waiting for the data fields request",
+        "Failed to fetch data fields: Timed out waiting for the document details request",
       );
       expect(requestTo(requests, documentPath).signal?.aborted).toBe(true);
     });
@@ -462,6 +476,104 @@ describe("getDocumentContentHandler", () => {
       expect(parsed.data_fields).toBeNull();
       expect(parsed.data_fields_error).toBe(
         "Data fields unavailable: unexpected response from the documents API",
+      );
+    });
+  });
+
+  describe("with include_space", () => {
+    const spaceId = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+
+    async function callWithSpace(routes: Route[], extraArgs = {}) {
+      const { handler, requests, unused } = setup(routes);
+      const result = await handler({ document_id: id, include_space: true, ...extraArgs });
+      expect(unused).toHaveLength(0);
+      return { result, requests, parsed: JSON.parse(result.content[0].text) };
+    }
+
+    it("returns the space id and name without data fields", async () => {
+      const { parsed, requests } = await callWithSpace([
+        markdownRoute(),
+        documentRoute({
+          response: {
+            document: {
+              id,
+              data_fields: [{ id: "df-1", name: "A", type: "text" }],
+              workspace: { id: spaceId, name: "Legal", permissions: ["manage"] },
+            },
+          },
+        }),
+      ]);
+
+      expect(requests).toHaveLength(2);
+      expect(parsed).toStrictEqual({
+        markdown: "Hi",
+        attachments: [],
+        space: { id: spaceId, name: "Legal" },
+      });
+    });
+
+    it("returns a null space when the document is not in a space", async () => {
+      const { parsed } = await callWithSpace([
+        markdownRoute(),
+        documentRoute({ response: { document: { id, workspace: null } } }),
+      ]);
+
+      expect(parsed.space).toBeNull();
+      expect(parsed.space_error).toBeUndefined();
+    });
+
+    it("makes a single document request when data fields are requested too", async () => {
+      const { parsed, requests } = await callWithSpace(
+        [
+          markdownRoute(),
+          documentRoute({
+            response: {
+              document: {
+                id,
+                data_fields: [{ id: "df-1", name: "A", type: "text" }],
+                workspace: { id: spaceId, name: "Legal" },
+              },
+            },
+          }),
+        ],
+        { include_data_fields: true },
+      );
+
+      expect(requests.filter((request) => request.url.pathname === documentPath)).toHaveLength(1);
+      expect(parsed).toStrictEqual({
+        markdown: "Hi",
+        attachments: [],
+        data_fields: [{ id: "df-1", name: "A", type: "text" }],
+        space: { id: spaceId, name: "Legal" },
+      });
+    });
+
+    it("still returns the content when the document request fails", async () => {
+      const { result, parsed } = await callWithSpace(
+        [markdownRoute(), documentRoute({ status: 403, response: { error: "forbidden" } })],
+        { include_data_fields: true },
+      );
+
+      expect(result.isError).toBeUndefined();
+      expect(parsed.markdown).toBe("Hi");
+      expect(parsed.space).toBeNull();
+      expect(parsed.space_error).toMatch(/^Failed to fetch space: HTTP 403/);
+      expect(parsed.data_fields).toBeNull();
+      expect(parsed.data_fields_error).toMatch(/^Failed to fetch data fields: HTTP 403/);
+    });
+
+    it.each([
+      ["has no document", { response: {} }],
+      ["has no workspace", { response: { document: { id } } }],
+      ["is JSON null", { body: "null" }],
+      ["is not JSON", { contentType: "text/html", response: "<html></html>" }],
+    ])("reports the space as unavailable when the response %s", async (_name, overrides) => {
+      const { parsed } = await callWithSpace([markdownRoute(), documentRoute(overrides)]);
+
+      expect(parsed.markdown).toBe("Hi");
+      expect(parsed.space).toBeNull();
+      expect(parsed.space_error).toBe(
+        "Space unavailable: unexpected response from the documents API",
       );
     });
   });
