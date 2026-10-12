@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 import type { ContractbookClient, GetTemplateResponse } from "../contractbook/client.js";
+import { errorMessage, formatDataField } from "./shared.js";
 
 export const getTemplateConfig = {
   title: "Get Template",
   description:
-    "Gets a template by ID, including its data fields (id, name, type, current value). " +
+    "Gets a template by ID, including its data fields (id, name, type, value, description, required, " +
+    "config, formatting). " +
+    "Values are raw: dates are YYYY-MM-DD, numbers are plain. `formatting` is how Contractbook displays them; use it when showing a value to the user, never when setting one. " +
     "Use this to discover which data fields a template has before calling create_document_from_template.",
   inputSchema: z.object({
     id: z.uuid().describe("Template ID (UUID), from list_templates"),
@@ -32,9 +35,7 @@ export function getTemplateHandler(client: ContractbookClient) {
     } catch (error) {
       return {
         isError: true,
-        content: [
-          { type: "text" as const, text: error instanceof Error ? error.message : String(error) },
-        ],
+        content: [{ type: "text" as const, text: errorMessage(error) }],
       };
     }
   };
@@ -58,18 +59,7 @@ function formatTemplateResponse(response: GetTemplateResponse) {
       attachments: template.attachments?.map((attachment) => ({
         original: attachment.original,
       })),
-      data_fields: template.data_fields?.map((field) => ({
-        id: field.id,
-        name: field.name,
-        type: field.type,
-        value: field.value,
-        description: field.description,
-        required: field.required,
-        config: field.config && {
-          label: field.config.label,
-          options: field.config.options,
-        },
-      })),
+      data_fields: template.data_fields?.map(formatDataField),
     },
   };
 }

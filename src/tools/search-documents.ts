@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { ContractbookClient, SearchDocumentsResponse } from "../contractbook/client.js";
+import { errorMessage } from "./shared.js";
 
 export const searchDocumentsConfig = {
   title: "Search Documents",
@@ -52,9 +53,7 @@ export function searchDocumentsHandler(client: ContractbookClient) {
     } catch (error) {
       return {
         isError: true,
-        content: [
-          { type: "text" as const, text: error instanceof Error ? error.message : String(error) },
-        ],
+        content: [{ type: "text" as const, text: errorMessage(error) }],
       };
     }
   };

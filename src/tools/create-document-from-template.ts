@@ -5,7 +5,7 @@ import type {
   CreateDocumentRequest,
   CreateDocumentResponse,
 } from "../contractbook/client.js";
-import { dataFieldSchema, signatureVerificationMethods } from "./shared.js";
+import { dataFieldSchema, errorMessage, signatureVerificationMethods } from "./shared.js";
 
 const signingOrderModes = ["random", "strict", "grouped"] as const;
 
@@ -134,9 +134,7 @@ export function createDocumentFromTemplateHandler(client: ContractbookClient, ap
     } catch (error) {
       return {
         isError: true,
-        content: [
-          { type: "text" as const, text: error instanceof Error ? error.message : String(error) },
-        ],
+        content: [{ type: "text" as const, text: errorMessage(error) }],
       };
     }
   };
