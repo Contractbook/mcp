@@ -8,6 +8,8 @@ import {
 import { fakeFetch } from "./helpers/fake-fetch.js";
 import { makeClient } from "./helpers/make-client.js";
 
+const appUrl = "https://app.test";
+
 describe("searchDocumentsConfig", () => {
   it("requires a term", () => {
     expect(() => searchDocumentsConfig.inputSchema.parse({})).toThrow();
@@ -59,7 +61,7 @@ describe("searchDocumentsHandler", () => {
         response: { documents: [], pagination_meta: { cursor: null } },
       },
     ]);
-    const handler = searchDocumentsHandler(makeClient(fetchImpl));
+    const handler = searchDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     await handler({ term: "agreement", page_size: 5 });
 
@@ -106,7 +108,7 @@ describe("searchDocumentsHandler", () => {
         },
       },
     ]);
-    const handler = searchDocumentsHandler(makeClient(fetchImpl));
+    const handler = searchDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({ term: "agreement" });
     expect(result.isError).toBeUndefined();
@@ -114,6 +116,7 @@ describe("searchDocumentsHandler", () => {
     expect(parsed.cursor).toBe("bmV4dA");
     const document = parsed.documents[0];
     expect(document.id).toBe("doc-1");
+    expect(document.url).toBe("https://app.test/contract/Test%20Agreement/doc-1");
     expect(document.version).toBeUndefined();
     expect(document.owner).toEqual({ full_name: "Jane Doe", email: "jane@example.com" });
     expect(document.parties[0]).toEqual({
@@ -134,7 +137,7 @@ describe("searchDocumentsHandler", () => {
         response: { error: "unauthorized" },
       },
     ]);
-    const handler = searchDocumentsHandler(makeClient(fetchImpl));
+    const handler = searchDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({ term: "agreement" });
     expect(result.isError).toBe(true);

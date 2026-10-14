@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { ContractbookClient, ListDocumentsResponse } from "../contractbook/client.js";
-import { errorMessage } from "./shared.js";
+import { documentUrl, errorMessage } from "./shared.js";
 
 const documentStates = [
   "draft",
@@ -21,6 +21,8 @@ export const listDocumentsConfig = {
   description:
     "Lists documents with filtering, sorting and cursor-based pagination. " +
     "Use the title filter to search documents by title (case-insensitive partial match). " +
+    "Each document includes its url in the Contractbook app; use it whenever you link to a document " +
+    "and never build document links yourself. " +
     "To fetch the next page, pass the cursor returned by the previous call.",
   inputSchema: z.object({
     title: z
@@ -88,12 +90,14 @@ export interface ListDocumentsArgs {
   sort_direction?: "asc" | "desc";
 }
 
-export function listDocumentsHandler(client: ContractbookClient) {
+export function listDocumentsHandler(client: ContractbookClient, appUrl: string) {
   return async (args: ListDocumentsArgs) => {
     try {
       const response = await client.listDocuments(buildParams(args));
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(formatListResponse(response)) }],
+        content: [
+          { type: "text" as const, text: JSON.stringify(formatListResponse(response, appUrl)) },
+        ],
       };
     } catch (error) {
       return {
@@ -150,10 +154,11 @@ export function buildParams(args: ListDocumentsArgs): Record<string, string | st
   return params;
 }
 
-function formatListResponse(response: ListDocumentsResponse) {
+function formatListResponse(response: ListDocumentsResponse, appUrl: string) {
   return {
     documents: (response.documents ?? []).map((document) => ({
       id: document.id,
+      url: documentUrl(appUrl, document),
       title: document.title,
       state: document.state,
       type: document.type,
