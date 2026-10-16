@@ -235,9 +235,9 @@ export interface CreatedDocument {
 }
 
 export interface DocumentWorkspace {
-  id?: string;
-  name?: string;
-  permissions?: string[];
+  id: string;
+  name: string;
+  permissions: string[];
 }
 
 export interface CreateDocumentResponse {

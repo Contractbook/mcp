@@ -567,14 +567,11 @@ describe("getDocumentContentHandler", () => {
       ["has no workspace", { response: { document: { id } } }],
       ["is JSON null", { body: "null" }],
       ["is not JSON", { contentType: "text/html", response: "<html></html>" }],
-    ])("reports the space as unavailable when the response %s", async (_name, overrides) => {
-      const { parsed } = await callWithSpace([markdownRoute(), documentRoute(overrides)]);
+    ])("returns a null space and the content when the response %s", async (_name, overrides) => {
+      const { result, parsed } = await callWithSpace([markdownRoute(), documentRoute(overrides)]);
 
-      expect(parsed.markdown).toBe("Hi");
-      expect(parsed.space).toBeNull();
-      expect(parsed.space_error).toBe(
-        "Space unavailable: unexpected response from the documents API",
-      );
+      expect(result.isError).toBeUndefined();
+      expect(parsed).toStrictEqual({ markdown: "Hi", attachments: [], space: null });
     });
   });
 });

@@ -168,20 +168,8 @@ function formatDataFields(result: DocumentDetailsResult) {
 
 function formatSpace(result: DocumentDetailsResult) {
   if (!result.ok) {
-    return {
-      space: null,
-      space_error: `Failed to fetch space: ${errorMessage(result.error)}`,
-    };
+    return { space: null, space_error: `Failed to fetch space: ${errorMessage(result.error)}` };
   }
   const workspace = result.response?.document?.workspace;
-  if (workspace === null) {
-    return { space: null };
-  }
-  if (typeof workspace !== "object") {
-    return {
-      space: null,
-      space_error: "Space unavailable: unexpected response from the documents API",
-    };
-  }
-  return { space: { id: workspace.id, name: workspace.name } };
+  return { space: workspace ? { id: workspace.id, name: workspace.name } : null };
 }
