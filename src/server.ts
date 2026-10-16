@@ -25,8 +25,12 @@ export function createServer({ client, appUrl }: ServerDependencies): McpServer 
     version: __VERSION__,
   });
 
-  server.registerTool("list_documents", listDocumentsConfig, listDocumentsHandler(client));
-  server.registerTool("search_documents", searchDocumentsConfig, searchDocumentsHandler(client));
+  server.registerTool("list_documents", listDocumentsConfig, listDocumentsHandler(client, appUrl));
+  server.registerTool(
+    "search_documents",
+    searchDocumentsConfig,
+    searchDocumentsHandler(client, appUrl),
+  );
   server.registerTool(
     "get_document_content",
     getDocumentContentConfig,

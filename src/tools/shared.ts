@@ -57,3 +57,23 @@ export function formatDataField(field: TemplateDataField) {
     formatting: field.formatting,
   };
 }
+
+export function documentUrl(
+  appUrl: string,
+  document: { id?: string; title?: string | null; state?: string; type?: string },
+): string | undefined {
+  if (!document.id) {
+    return undefined;
+  }
+  const route =
+    document.state === "draft"
+      ? "draft"
+      : document.type === "stored_contract"
+        ? "stored-contract"
+        : "contract";
+  return `${appUrl}/${route}/${encodeDocumentTitle(document.title)}/${document.id}`;
+}
+
+function encodeDocumentTitle(title: string | null | undefined): string {
+  return encodeURIComponent((title || "Untitled").replace(/%/g, "-").replace(/#/g, ""));
+}

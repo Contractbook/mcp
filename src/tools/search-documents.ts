@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { ContractbookClient, SearchDocumentsResponse } from "../contractbook/client.js";
-import { errorMessage } from "./shared.js";
+import { documentUrl, errorMessage } from "./shared.js";
 
 export const searchDocumentsConfig = {
   title: "Search Documents",
@@ -10,6 +10,8 @@ export const searchDocumentsConfig = {
     "Returns documents ranked by relevance, with matching text snippets. " +
     "Matched terms in snippets are wrapped in <@|...|@> markers. " +
     "Use this for finding documents by what they say; use list_documents for structured filtering. " +
+    "Each document includes its url in the Contractbook app; use it whenever you link to a document " +
+    "and never build document links yourself. " +
     "To fetch the next page, pass the cursor returned by the previous call.",
   inputSchema: z.object({
     term: z.string().min(3).max(500).describe("Search query (3-500 characters)"),
@@ -43,12 +45,14 @@ export interface SearchDocumentsArgs {
   sort_direction?: "asc" | "desc";
 }
 
-export function searchDocumentsHandler(client: ContractbookClient) {
+export function searchDocumentsHandler(client: ContractbookClient, appUrl: string) {
   return async (args: SearchDocumentsArgs) => {
     try {
       const response = await client.searchDocuments(buildParams(args));
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(formatSearchResponse(response)) }],
+        content: [
+          { type: "text" as const, text: JSON.stringify(formatSearchResponse(response, appUrl)) },
+        ],
       };
     } catch (error) {
       return {
@@ -78,10 +82,11 @@ export function buildParams(args: SearchDocumentsArgs): Record<string, string | 
   return params;
 }
 
-function formatSearchResponse(response: SearchDocumentsResponse) {
+function formatSearchResponse(response: SearchDocumentsResponse, appUrl: string) {
   return {
     documents: (response.documents ?? []).map((document) => ({
       id: document.id,
+      url: documentUrl(appUrl, document),
       title: document.title,
       state: document.state,
       type: document.type,

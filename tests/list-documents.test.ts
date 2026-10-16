@@ -8,6 +8,8 @@ import {
 import { fakeFetch } from "./helpers/fake-fetch.js";
 import { makeClient } from "./helpers/make-client.js";
 
+const appUrl = "https://app.test";
+
 describe("listDocumentsConfig", () => {
   it("accepts an empty input", () => {
     expect(listDocumentsConfig.inputSchema.parse({})).toEqual({});
@@ -52,7 +54,7 @@ describe("listDocumentsHandler", () => {
         response: { documents: [], pagination_meta: { cursor: null } },
       },
     ]);
-    const handler = listDocumentsHandler(makeClient(fetchImpl));
+    const handler = listDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     await handler({ title: "employment", states: ["pending", "signed"], page_size: 10 });
 
@@ -102,7 +104,7 @@ describe("listDocumentsHandler", () => {
         },
       },
     ]);
-    const handler = listDocumentsHandler(makeClient(fetchImpl));
+    const handler = listDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({});
     expect(result.isError).toBeUndefined();
@@ -110,6 +112,7 @@ describe("listDocumentsHandler", () => {
     expect(parsed.cursor).toBe("bmV4dA");
     const document = parsed.documents[0];
     expect(document.id).toBe("doc-1");
+    expect(document.url).toBe("https://app.test/contract/Test/doc-1");
     expect(document.state).toBe("pending");
     expect(document.comment_count).toBeUndefined();
     expect(document.owner).toEqual({ full_name: "Jane Doe", email: "jane@example.com" });
@@ -121,6 +124,43 @@ describe("listDocumentsHandler", () => {
     });
   });
 
+  it("links each document to the app route for its state and type", async () => {
+    const { fetchImpl } = fakeFetch([
+      {
+        method: "GET",
+        path: "/v3/documents",
+        response: {
+          documents: [
+            { id: "doc-1", title: "NDA", state: "draft", type: "draft" },
+            { id: "doc-2", title: "Lease", state: "signed", type: "stored_contract" },
+            {
+              id: "doc-3",
+              title: "Contractbook x VI - Order Confermation",
+              state: "signed",
+              type: "contract",
+            },
+            { id: "doc-4", title: "50% off #1", state: "pending", type: "contract" },
+            { id: "doc-5", title: null, state: "draft", type: "draft" },
+          ],
+          pagination_meta: { cursor: null },
+        },
+      },
+    ]);
+    const handler = listDocumentsHandler(makeClient(fetchImpl), appUrl);
+
+    const result = await handler({});
+    const urls = JSON.parse(result.content[0].text).documents.map(
+      (document: { url: string }) => document.url,
+    );
+    expect(urls).toEqual([
+      "https://app.test/draft/NDA/doc-1",
+      "https://app.test/stored-contract/Lease/doc-2",
+      "https://app.test/contract/Contractbook%20x%20VI%20-%20Order%20Confermation/doc-3",
+      "https://app.test/contract/50-%20off%201/doc-4",
+      "https://app.test/draft/Untitled/doc-5",
+    ]);
+  });
+
   it("returns isError on HTTP failure", async () => {
     const { fetchImpl } = fakeFetch([
       {
@@ -130,7 +170,7 @@ describe("listDocumentsHandler", () => {
         response: { error: "unauthorized" },
       },
     ]);
-    const handler = listDocumentsHandler(makeClient(fetchImpl));
+    const handler = listDocumentsHandler(makeClient(fetchImpl), appUrl);
 
     const result = await handler({});
     expect(result.isError).toBe(true);
