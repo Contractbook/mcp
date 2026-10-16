@@ -58,9 +58,6 @@ export function formatDataField(field: TemplateDataField) {
   };
 }
 
-// Mirrors getDocumentPath in the web app: drafts open at /draft, stored contracts at
-// /stored-contract, everything else at /contract. All routes need both the title and the id;
-// /documents/{id} is not a document page and redirects to the contract list.
 export function documentUrl(
   appUrl: string,
   document: { id?: string; title?: string | null; state?: string; type?: string },
@@ -77,7 +74,6 @@ export function documentUrl(
   return `${appUrl}/${route}/${encodeDocumentTitle(document.title)}/${document.id}`;
 }
 
-// The app replaces "%" with "-" and drops "#" before encoding, since both break the route.
 function encodeDocumentTitle(title: string | null | undefined): string {
   return encodeURIComponent((title || "Untitled").replace(/%/g, "-").replace(/#/g, ""));
 }

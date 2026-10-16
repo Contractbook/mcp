@@ -196,7 +196,6 @@ function formatCreatedDocumentResponse(response: CreateDocumentResponse, appUrl:
   return {
     document: {
       id: document.id,
-      // Templates always create drafts, so link to the draft page even if state is missing.
       url: documentUrl(appUrl, { state: "draft", ...document }),
       title: document.title,
       state: document.state,
