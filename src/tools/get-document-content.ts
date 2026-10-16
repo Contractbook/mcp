@@ -9,9 +9,9 @@ import type {
 } from "../contractbook/client.js";
 import { errorMessage, formatDataField } from "./shared.js";
 
-// Once the content has arrived, wait at most this long for the data fields request.
+// Once the content has arrived, wait at most this long for the document details request.
 // The request's own 30s timeout still applies, so the actual wait can be shorter.
-export const DATA_FIELDS_GRACE_MS = 10_000;
+export const DOCUMENT_DETAILS_GRACE_MS = 10_000;
 
 export const getDocumentContentConfig = {
   title: "Get Document Content",
@@ -20,7 +20,10 @@ export const getDocumentContentConfig = {
     "Set include_data_fields to also get the document's data fields (id, name, type, value, description, " +
     "required, config, formatting); this costs an extra, heavier API request, so only set it when you need them. " +
     "Values are raw: dates are YYYY-MM-DD, numbers are plain. `formatting` is how Contractbook displays them; use it when showing a value to the user, never when setting one. " +
-    "If the data fields can't be fetched, data_fields is null and data_fields_error says why; " +
+    "Set include_space to also get the space the document is in, as space: {id, name}; " +
+    "space is null when the document isn't in any space you have access to (for example, it's in your personal documents). " +
+    "Data fields and space come from the same extra request, so setting both costs no more than setting one. " +
+    "If that request fails, the requested data_fields and/or space are null and data_fields_error/space_error say why; " +
     "the text is still returned. " +
     "Use this to read what a document actually says. Pass the document id from list_documents or search_documents.",
   inputSchema: z.object({
@@ -29,6 +32,10 @@ export const getDocumentContentConfig = {
       .boolean()
       .optional()
       .describe("Also return the document's data fields (default false)"),
+    include_space: z
+      .boolean()
+      .optional()
+      .describe("Also return the space the document is in (default false)"),
   }),
   annotations: {
     readOnlyHint: true,
@@ -39,25 +46,29 @@ export const getDocumentContentConfig = {
 export interface GetDocumentContentArgs {
   document_id: string;
   include_data_fields?: boolean;
+  include_space?: boolean;
 }
 
-type DataFieldsResult = { ok: true; response: GetDocumentResponse } | { ok: false; error: unknown };
+type DocumentDetailsResult =
+  | { ok: true; response: GetDocumentResponse }
+  | { ok: false; error: unknown };
 
 export function getDocumentContentHandler(client: ContractbookClient) {
   return async (args: GetDocumentContentArgs, ctx?: ServerContext) => {
     const cancelled = ctx?.mcpReq?.signal;
     const controller = new AbortController();
-    const dataFieldsRequest: Promise<DataFieldsResult> | undefined = args.include_data_fields
-      ? client
-          .getDocument(
-            args.document_id,
-            cancelled ? AbortSignal.any([cancelled, controller.signal]) : controller.signal,
-          )
-          .then(
-            (response) => ({ ok: true, response }),
-            (error: unknown) => ({ ok: false, error }),
-          )
-      : undefined;
+    const detailsRequest: Promise<DocumentDetailsResult> | undefined =
+      args.include_data_fields || args.include_space
+        ? client
+            .getDocument(
+              args.document_id,
+              cancelled ? AbortSignal.any([cancelled, controller.signal]) : controller.signal,
+            )
+            .then(
+              (response) => ({ ok: true, response }),
+              (error: unknown) => ({ ok: false, error }),
+            )
+        : undefined;
 
     let content: ReturnType<typeof formatContent>;
     try {
@@ -75,7 +86,7 @@ export function getDocumentContentHandler(client: ContractbookClient) {
       };
     }
 
-    if (!dataFieldsRequest) {
+    if (!detailsRequest) {
       return {
         content: [{ type: "text" as const, text: JSON.stringify(content) }],
       };
@@ -84,13 +95,13 @@ export function getDocumentContentHandler(client: ContractbookClient) {
     const timer = setTimeout(
       () =>
         controller.abort(
-          new DOMException("Timed out waiting for the data fields request", "TimeoutError"),
+          new DOMException("Timed out waiting for the document details request", "TimeoutError"),
         ),
-      DATA_FIELDS_GRACE_MS,
+      DOCUMENT_DETAILS_GRACE_MS,
     );
-    let dataFields: DataFieldsResult;
+    let details: DocumentDetailsResult;
     try {
-      dataFields = await dataFieldsRequest;
+      details = await detailsRequest;
     } finally {
       clearTimeout(timer);
     }
@@ -101,7 +112,11 @@ export function getDocumentContentHandler(client: ContractbookClient) {
       content: [
         {
           type: "text" as const,
-          text: JSON.stringify({ ...content, ...formatDataFields(dataFields) }),
+          text: JSON.stringify({
+            ...content,
+            ...(args.include_data_fields ? formatDataFields(details) : {}),
+            ...(args.include_space ? formatSpace(details) : {}),
+          }),
         },
       ],
     };
@@ -130,7 +145,7 @@ function formatContent(markdownResponse: DocumentContentResponse) {
   };
 }
 
-function formatDataFields(result: DataFieldsResult) {
+function formatDataFields(result: DocumentDetailsResult) {
   if (!result.ok) {
     return {
       data_fields: null,
@@ -149,4 +164,12 @@ function formatDataFields(result: DataFieldsResult) {
       .filter((field): field is TemplateDataField => typeof field === "object" && field !== null)
       .map(formatDataField),
   };
+}
+
+function formatSpace(result: DocumentDetailsResult) {
+  if (!result.ok) {
+    return { space: null, space_error: `Failed to fetch space: ${errorMessage(result.error)}` };
+  }
+  const workspace = result.response?.document?.workspace;
+  return { space: workspace ? { id: workspace.id, name: workspace.name } : null };
 }

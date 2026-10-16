@@ -231,6 +231,13 @@ export interface CreatedDocument {
   source_template_id?: string;
   parties?: CreatedDocumentParty[];
   data_fields?: TemplateDataField[];
+  workspace?: DocumentWorkspace | null;
+}
+
+export interface DocumentWorkspace {
+  id: string;
+  name: string;
+  permissions: string[];
 }
 
 export interface CreateDocumentResponse {
