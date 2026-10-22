@@ -50,6 +50,8 @@ jobs:
         run: pnpm build
       - if: steps.version.outputs.changed == 'true'
         run: pnpm publish --no-git-checks --access public
+      - if: steps.version.outputs.changed == 'true'
+        run: pnpm build:mcpb
       - name: Create release tag
         if: steps.version.outputs.changed == 'true'
         env:
@@ -59,3 +61,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
+      - name: Create GitHub release with Claude Desktop Extension
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          cp build/contractbook.mcpb "build/contractbook-$TAG.mcpb"
+          gh release create "$TAG" "build/contractbook-$TAG.mcpb" --title "$TAG" --generate-notes
