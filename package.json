@@ -44,10 +44,10 @@
   "devDependencies": {
     "@types/node": "^24.5.2",
     "@typescript/native-preview": "^7.0.0-dev",
-    "oxfmt": "^0.42.0",
+    "oxfmt": "^0.75.0",
     "oxlint": "^1.57.0",
-    "vite": "^7.3.3",
-    "vitest": "^3.2.4"
+    "vite": "^7.3.7",
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=24"
